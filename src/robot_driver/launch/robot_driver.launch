@@ -1,0 +1,10 @@
+<launch>
+    <node pkg="robot_driver" type="robot_driver_node" name="robot_driver" output="screen">
+        <param name="serial_name" value="/dev/ttyACM0"/>
+    </node>
+    <rosparam file="$(find robot_driver)/yaml/config.yaml" command="load"/>
+<!-- 
+    <node pkg="robot_driver" type="Gimbal_topic" name="Gimbal_topic" output="screen">
+    </node> -->
+
+</launch>
