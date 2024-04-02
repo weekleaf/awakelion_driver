@@ -83,14 +83,35 @@ uint8_t* serialPort::packData(uint16_t cmd_id, uint8_t *p_data, uint16_t len,uin
 }
 
 /*对接收数据进行处理*/
-void serialPort::pc_data_handler(uint8_t *p_frame, vision_rx_data &pc_send_mesg)
+void serialPort::pc_data_handler(uint8_t *p_frame, 
+                                vision_rx_data &pc_send_mesg,
+                                robot_judge1_data_t &robot_judge1_data_,
+                                game_robot_HP_t &game_robot_HP_
+                                )
 {
   frame_header_t *p_header = (frame_header_t *)p_frame;
   memcpy(p_header, p_frame, HEADER_LEN);
   uint8_t data_length = p_frame[1]; 
   unsigned char cmd_id = p_frame[5]; 
   uint8_t *data_addr = p_frame + HEADER_LEN + CMD_LEN - 1;
-  memcpy(&pc_send_mesg, data_addr, data_length);
+
+  switch (cmd_id)
+  {
+  case SENTRY_DATA_ID:
+    memcpy(&pc_send_mesg, data_addr, data_length);
+    break;
+  case CHASSIS_DATA_ID:
+    memcpy(&robot_judge1_data_,data_addr,data_length);
+    break;
+  case GIMBAL_DATA_ID:
+    memcpy(&game_robot_HP_,data_addr,data_length);
+    break;
+
+  default:
+  std::cout << "没有匹配的pc命令码" << std::endl;
+    break;
+  }
+  
         /*查看数据是否解包成功*/
     // ROS_INFO("pc_send_mesg.robot_pitch[0]=%f",pc_send_mesg.robot_pitch);
     // ROS_INFO("pc_send_mesg.robot_yaw[0]=%f",pc_send_mesg.robot_yaw);
@@ -132,7 +153,7 @@ void serialPort::unpackData(uint8_t *data, int size)
     if(verify_crc16_check_sum(protocol_packet, datalen) !=true){
         return;
     }
-    pc_data_handler(protocol_packet,stm2pc_mesg);
+    pc_data_handler(protocol_packet,stm2pc_mesg,robot_judge1_data,game_robot_HP);
     
     free(protocol_packet);
     protocol_packet = NULL;
@@ -144,7 +165,9 @@ void serialPort::unpackData(uint8_t *data, int size)
 }
 
 /*对数据进行读取*/
-void serialPort::readData(vision_rx_data &pc_send_mesg)
+void serialPort::readData(vision_rx_data &pc_send_mesg,
+                        robot_judge1_data_t &robot_judge1_data_,
+                        game_robot_HP_t &game_robot_HP_)
 {
     uint16_t _data_len_write = UNPACK_DATA_BUFFSIZE;
     uint8_t data[UNPACK_DATA_BUFFSIZE]={0};
@@ -156,6 +179,8 @@ void serialPort::readData(vision_rx_data &pc_send_mesg)
     // }
     unpackData(data,size);
     memcpy(&pc_send_mesg, &stm2pc_mesg, sizeof(vision_rx_data));
+    memcpy(&robot_judge1_data_, &robot_judge1_data, sizeof(robot_judge1_data_t));
+    memcpy(&game_robot_HP_,&game_robot_HP, sizeof(game_robot_HP_t));
 }
 
 void serialPort::writeData(vision_tx_data &pc_recv_mesg)
@@ -169,3 +194,50 @@ void serialPort::writeData(vision_tx_data &pc_recv_mesg)
     serial.write(tx_buf, sizeof(tx_buf)); 
 }
 
+void serialPort::JudgeDate_Processing(robot_judge1_data_t &judge1_data,game_robot_HP_t &robot_HP)
+        {
+            if(judge1_data.robot_id >= 101)
+                current_robot_color = blue;
+            else
+                current_robot_color = red;
+
+
+            if(current_robot_color = blue)
+            {
+                if(robot_HP.red_1_robot_HP != 0)
+                {
+                    enemy_HP_Hero = robot_HP.red_1_robot_HP;
+                    if(robot_HP.red_3_robot_HP = 0)
+                    enemy_HP_Infansty1 = robot_HP.red_4_robot_HP;
+                    else
+                    enemy_HP_Infansty1 = robot_HP.red_3_robot_HP;
+                }  
+                else
+                {
+                    enemy_HP_Infansty1 = robot_HP.red_3_robot_HP;
+                    enemy_HP_Infansty2 = robot_HP.red_4_robot_HP;
+                }
+                enemy_HP_Sentry = robot_HP.red_7_robot_HP;
+                enemy_HP_Base   = robot_HP.red_base_HP;
+            }
+            else if (current_robot_color = red)
+            {
+                if(robot_HP.blue_1_robot_HP != 0)
+                {
+                    enemy_HP_Hero = robot_HP.blue_1_robot_HP;
+                    if(robot_HP.blue_3_robot_HP = 0)
+                    enemy_HP_Infansty1 = robot_HP.blue_4_robot_HP;
+                    else 
+                    enemy_HP_Infansty1 = robot_HP.blue_3_robot_HP;
+                }
+                else
+                {
+                    enemy_HP_Infansty1 = robot_HP.blue_3_robot_HP;
+                    enemy_HP_Infansty2 = robot_HP.blue_4_robot_HP;
+                }
+                enemy_HP_Sentry = robot_HP.blue_7_robot_HP;
+                enemy_HP_Base   = robot_HP.blue_base_HP;
+            }
+            else
+                std::cout << "Judge_Color ERROR!" << std::endl;
+        }

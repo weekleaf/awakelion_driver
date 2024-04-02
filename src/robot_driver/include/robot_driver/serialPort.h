@@ -21,7 +21,8 @@ private:
     int fd;
 
     vision_rx_data     stm2pc_mesg;
-    vision_tx_data  pc2stm_mesg;
+    game_robot_HP_t    game_robot_HP;
+    robot_judge1_data_t robot_judge1_data;
     
     uint8_t tx_buf[PACK_DATA_BUFFSIZE];
     uint8_t buf[UNPACK_DATA_BUFFSIZE];
@@ -30,17 +31,29 @@ private:
     uint8_t* packData(uint16_t cmd_id, uint8_t *p_data, uint16_t len,uint8_t *tx_buf);
 
 public:
+    enum Color
+    {
+        red = 0,
+        blue = 1
+    };
+    Color current_robot_color;
+    
+    uint8_t enemy_HP_Hero;
+    uint8_t enemy_HP_Infansty1;
+    uint8_t enemy_HP_Infansty2;
+    uint8_t enemy_HP_Sentry;
+    uint8_t enemy_HP_Base;
     std::string name;
     serialPort() = default;
     explicit serialPort(std::string _name);
     ~serialPort();
 
     bool init();
-    void pc_data_handler(uint8_t *p_frame, vision_rx_data &msg_data);
+    void pc_data_handler(uint8_t *p_frame, vision_rx_data &msg_data,robot_judge1_data_t &judge1_data,game_robot_HP_t &robot_HP);
     void writeData(vision_tx_data &msg_data);
-    void readData(vision_rx_data &msg_data);
+    void readData(vision_rx_data &msg_data,robot_judge1_data_t &judge1_data,game_robot_HP_t &robot_HP);
     void unpackData(uint8_t *data, int size);
-
+    void JudgeDate_Processing(robot_judge1_data_t &judge1_data,game_robot_HP_t &robot_HP);
 
     bool reading(unsigned char *msg_data, uint16_t &size);
 };

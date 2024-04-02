@@ -1,0 +1,8 @@
+<root>
+    <BehaviorTree ID="SubA">
+        <Sequence>
+            <SelfIntroduction my_name="robot_bb" age="7" output="{bb_output}"/>
+            <SelfIntroduction my_name="{cc_name_sub}" age="8" output="{cc_output}"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

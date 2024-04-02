@@ -1,0 +1,60 @@
+<!-- 进攻模式 -->
+<root main_tree_to_execute="MainTree">
+    <BehaviorTree ID="MainTree">
+        <Fallback>
+            <GameStart/>  
+            <ReactiveSequence>
+                <AddBlood output="{enemy_sentry}" status="{addblood_need}"/>
+                <!-- <AttackSentry/> -->
+                    <Sequence>
+                        <AttackSentry input="{enemy_sentry}" blood_output="{addblood_need}" output="{attacksentry_status}"/>
+                        <AcessBuff blood_output="{addblood_need}"/>
+                        <Dense blood_output="{addblood_need}"/>
+                        <!-- <Patrol blood_output="{addblood_need}"/> -->
+                    </Sequence>
+            </ReactiveSequence>
+            <!-- my_name="GameStart" -->
+            <!-- game_output="{game_start}" -->
+            <!-- blood_output="{full_blood}"  -->
+            <!-- buff_output="{buff_get}" -->
+            <!-- <Dense /> -->
+            <!-- dense_output="{dense_mode}" -->
+            <!-- <Fallback>
+                <AttackSentry/>
+                <AttackBase/>
+            </Fallback> -->
+            <!-- <Patrol/> -->
+        </Fallback>
+    </BehaviorTree>
+</root>
+
+
+<!-- 防御模式 -->
+<!-- <root main_tree_to_execute="MainTree">
+    <BehaviorTree ID="MainTree">
+        <Fallback>
+            <GameStart/>  
+            <ReactiveSequence>
+                <AddBlood />
+                    <Sequence>
+                        <AttackSentry/>
+                        <Dense/>
+                        <Patrol/>
+                    </Sequence>
+            </ReactiveSequence> -->
+            <!-- my_name="GameStart" -->
+            <!-- game_output="{game_start}" -->
+            <!-- blood_output="{full_blood}"  -->
+            <!-- <AcessBuff /> -->
+            <!-- buff_output="{buff_get}" -->
+            <!-- <Dense /> -->
+            <!-- dense_output="{dense_mode}" -->
+            <!-- <Fallback>
+                <AttackSentry/>
+                <AttackBase/>
+            </Fallback> -->
+
+            <!-- <Patrol/> -->
+        <!-- </Fallback>
+    </BehaviorTree>
+</root> -->

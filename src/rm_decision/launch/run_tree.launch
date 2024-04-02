@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="rm_decision" type="tree_node" name="tree_node" output="screen">
+        <param name="file_path" type="string" value="$(find rm_decision)/config/main_tree.xml"/>
+    </node>
+</launch>

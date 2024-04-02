@@ -1,0 +1,10 @@
+uint8 game_progress
+uint16 stage_remain_time
+uint8 robot_id
+uint16 current_HP
+uint16 maximum_HP
+uint8 enemy_HP_Hero
+uint8 enemy_HP_Infansty1
+uint8 enemy_HP_Infansty2
+uint8 enemy_HP_Sentry
+uint8 enemy_HP_Base

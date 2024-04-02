@@ -10,6 +10,7 @@ find_package(
         serial
         std_msgs
         sensor_msgs
+        rm_msgs
 )
 
 ## Generate messages in the 'msg' folder

@@ -1,0 +1,6 @@
+uint8 current_HP
+uint8 enemy_HP_Sentry
+uint8 enemy_HP_Infansty1
+uint8 enemy_HP_Infansty2
+uint8 enemy_HP_Hero
+uint16 stage_remain_time
