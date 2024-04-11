@@ -4,12 +4,15 @@
         <Fallback>
             <GameStart/>  
             <ReactiveSequence>
-                <AddBlood output="{enemy_sentry}" status="{addblood_need}"/>
+                <AddBlood output="{enemy_sentry}" status="{addblood_need}" />
+                <!-- bullet_status="{bullet_need}" -->
                 <!-- <AttackSentry/> -->
                     <Sequence>
-                        <AttackSentry input="{enemy_sentry}" blood_output="{addblood_need}" output="{attacksentry_status}"/>
-                        <AcessBuff blood_output="{addblood_need}"/>
-                        <Dense blood_output="{addblood_need}"/>
+                        <AttackSentry input="{enemy_sentry}" blood_output="{addblood_need}"  output="{attacksentry_status}"/>
+                        <!-- bullet_output="{bullet_need}" -->
+                        <!-- <AcessBuff blood_output="{addblood_need}" bullet_output="{bullet_need}"/> -->
+                        <Dense blood_output="{addblood_need}" />  
+                        <!-- bullet_output="{bullet_need}" -->
                         <!-- <Patrol blood_output="{addblood_need}"/> -->
                     </Sequence>
             </ReactiveSequence>

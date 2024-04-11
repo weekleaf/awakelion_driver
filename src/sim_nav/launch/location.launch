@@ -1,0 +1,13 @@
+<launch>
+    <!-- 设置地图的配置文件 -->
+    <arg name="map" default="rmul2024.yaml" />
+    <!-- 运行地图服务器，并且加载设置的地图-->
+    <node name="map_server" pkg="map_server" type="map_server" args="$(find sim_nav)/map/$(arg map)"/>
+    <!-- 启动AMCL节点 -->
+    <include file="$(find sim_nav)/launch/gmapping.launch" />
+    <!-- 运行rviz -->
+    <!-- <node pkg="rviz" type="rviz" name="rviz"/> -->
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find sim_nav)/rviz/nav2.rviz"/>
+    <node pkg="joint_state_publisher" name="joint_state_publisher" type="joint_state_publisher" />
+    <node pkg="robot_state_publisher" name="robot_state_publisher" type="robot_state_publisher" />
+</launch>

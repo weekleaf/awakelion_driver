@@ -26,6 +26,7 @@ class AttackSentry : public BT::SyncActionNode {
             BT::PortsList ports_list;
             ports_list.insert(BT::InputPort<uint8_t>("input"));
             ports_list.insert(BT::InputPort<uint8_t>("blood_output"));
+            // ports_list.insert(BT::InputPort<uint8_t>("bullet_output"));
             ports_list.insert(BT::OutputPort<bool>("output"));
             return ports_list;
         } 
@@ -76,54 +77,62 @@ class AttackSentry : public BT::SyncActionNode {
 
         BT::NodeStatus tick() override
         {
-            attacksentry_tx.dodge_ctrl = 0;
             auto enemy_HP_Sentry = getInput<uint8_t>("input");
             auto addblood_need = getInput<uint8_t>("blood_output");
+            // auto bullet_need = getInput<uint8_t>("bullet_output");
+            
+
             // ROS_INFO("Addblood_need_ is %d",addblood_need);
             if(addblood_need == 1)
                 addblood_need_ = 1;
-            else addblood_need_ = 0;
+            // else addblood_need_ = 0;
 
+            // if(bullet_need == 1)
+            //     bullet_need_ = 1;
+            // else bullet_need_ = 0;
             std::cout << "addblood_need_" <<  addblood_need_ <<std::endl;
 
-            if(addblood_need_ || attacksentry_rx_.stage_remain_time <= 244)
+            if(addblood_need_ || attacksentry_rx_.stage_remain_time <= 209 || bullet_need_)
             {
+                attacksentry_tx.dodge_ctrl = 0;
+                attacksentry_pub_.publish(attacksentry_tx);
                 return BT::NodeStatus::SUCCESS;
             }
             if(!addblood_need_ == 1 
                 && have_chance_to_attack == 0 
-                && attacksentry_rx_.stage_remain_time > 270)
+                && attacksentry_rx_.stage_remain_time > 209)
             {
                 sendGoal(patrol_points[0].x,patrol_points[0].y,0);
             }
 
 
             
-            if((attacksentry_rx_.enemy_HP_Hero + attacksentry_rx_.enemy_HP_Infansty1 
-                + attacksentry_rx_.enemy_HP_Infansty2)<= 150)
-                have_chance_to_attack = 1;
+            // if((attacksentry_rx_.enemy_HP_Hero + attacksentry_rx_.enemy_HP_Infansty1 
+            //     + attacksentry_rx_.enemy_HP_Infansty2)<= 150)
+            //     have_chance_to_attack = 1;
             
-            if(attacksentry_rx_.stage_remain_time <= 270 
-                && attacksentry_rx_.stage_remain_time >= 244 )
-            {   
-                if(have_chance_to_attack == 1)
-                {
-                    sendGoal(patrol_points[1].x,patrol_points[1].y,0);
-                }
-                else
-                {
-                    sendGoal(patrol_points[2].x,patrol_points[2].y,0);
-                }
-            }
+            // if(attacksentry_rx_.stage_remain_time <= 270 
+            //     && attacksentry_rx_.stage_remain_time >= 244 )
+            // {   
+            //     if(have_chance_to_attack == 1)
+            //     {
+            //         sendGoal(patrol_points[1].x,patrol_points[1].y,0);
+            //     }
+            //     else
+            //     {
+            //         sendGoal(patrol_points[2].x,patrol_points[2].y,0);
+            //     }
+            // }
             actionlib::SimpleClientGoalState state = ac->getState();
             ROS_INFO("ATTACK SENTRY :%s",state.toString().c_str());
             if (ac->getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
             {
+                attacksentry_tx.dodge_ctrl = 1;
                 attacksentry_pub_.publish(attacksentry_tx);
                 return BT::NodeStatus::FAILURE;
             }
             else 
-            {
+            {               
                 attacksentry_pub_.publish(attacksentry_tx);
                 return BT::NodeStatus::FAILURE;
             }
@@ -132,6 +141,7 @@ class AttackSentry : public BT::SyncActionNode {
         }
     uint8_t have_chance_to_attack = 0;
     uint8_t addblood_need_ = 0;
+    uint8_t bullet_need_ = 0;
     bool attacksentry_rx_received_;
     rm_msgs::attacksentry_rx attacksentry_rx_;
     rm_msgs::attacksentry_tx attacksentry_tx;
@@ -146,12 +156,17 @@ class AttackSentry : public BT::SyncActionNode {
         double y;
     };
 
-    std::vector<patrol_point> patrol_points{
-      {8.4,1.0},
-      {8.45,2.0},
-      {6.0,1.5},
-    };
+    // std::vector<patrol_point> patrol_points{
+    //   {8.4,1.0},
+    //   {8.45,2.0},
+    //   {6.0,1.5},
+    // };
 
+    std::vector<patrol_point> patrol_points{
+        {4.34,1.76},
+        {8.45,2.0},
+        {6.0,1.5},
+    };
     void AttackSentryCallback(const boost::shared_ptr<const rm_msgs::attacksentry_rx>& msg)
     {
         attacksentry_rx_ = *msg;
@@ -195,9 +210,15 @@ class AttackSentry : public BT::SyncActionNode {
         // 如果距离小于或等于0.5米，发送 dodge_ctrl = 1 的标志位
         if (current_distance <= 0.5)
         {
-            ROS_INFO("Distance to goal is less than or equal to 0.5 meters. Sending dodge_ctrl = 1.");
+            ROS_INFO("Attack sentry distance to goal is less than or equal to 0.5 meters. Sending dodge_ctrl = 1.");
             attacksentry_tx.dodge_ctrl = 1;
+            attacksentry_pub_.publish(attacksentry_tx);
         }
+        else
+        {
+            attacksentry_tx.dodge_ctrl = 0;
+            attacksentry_pub_.publish(attacksentry_tx);
+        } 
         // 在此处可以添加接收到反馈时的逻辑处理
     }
 

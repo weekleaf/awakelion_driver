@@ -27,12 +27,12 @@ class Dense : public BT::SyncActionNode {
         static BT::PortsList providedPorts() {
             BT::PortsList ports_list;
             ports_list.insert(BT::InputPort<uint8_t>("blood_output"));
+            ports_list.insert(BT::InputPort<uint8_t>("bullet_output"));
             return ports_list;
         } 
 
         void publish()
         {
-            rm_msgs::gamestart_tx msg;
             dense_tx_.dodge_ctrl = dodge_ctrl;
             ROS_INFO("dense_tx_.dodge_ctrl is %s",dense_tx_.dodge_ctrl ? "true" : "false");
             dense_pub_.publish(dense_tx_);
@@ -88,34 +88,49 @@ class Dense : public BT::SyncActionNode {
 
         void PresetPostion()
         {
-            patrol_points[0].x = 4.0;
-            patrol_points[0].y = 1.1;
+            // patrol_points[0].x = 4.0;
+            // patrol_points[0].y = 1.1;
+                //   {2.47,2.567},
+            patrol_points[0].x = 2.47;
+            patrol_points[0].y = 2.567;
             patrol_points[1].x = 5.26;
             patrol_points[1].y = 2.2;
             patrol_points[2].x = 6.0;
             patrol_points[2].y = 1.5;
+
+            // patrol_points[0].x = 4.016;
+            // patrol_points[0].y = 4.39;
+            // patrol_points[1].x = 2.646;
+            // patrol_points[1].y = 2.607;
         }
 
         BT::NodeStatus tick() override
         {
-            dodge_ctrl = 0;
+            dense_tx_.dodge_ctrl = 0;
             PresetPostion();
             auto addblood_need = getInput<uint8_t>("blood_output");
+            // auto bullet_need = getInput<uint8_t>("bullet_output");
+
             if(addblood_need == 1)
                 addblood_need_ = 1;
             else addblood_need_ = 0;
 
-            if(addblood_need_ )
+            // if(bullet_need == 1)
+            //     bullet_need_ = 1;
+            // else bullet_need_ = 0;
+
+            
+            if(addblood_need_ || bullet_need_)
             {
                 return BT::NodeStatus::SUCCESS;
             }
-            if(dense_rx_.stage_remain_time <= 180)
+            // if(dense_rx_.stage_remain_time >= 190)
+            // {
+            //     sendGoal(patrol_points[0].x,patrol_points[0].y,0);
+            // }
+            if(dense_rx_.stage_remain_time <= 209)
             {
                 sendGoal(patrol_points[0].x,patrol_points[0].y,0);
-            }
-            if(dense_rx_.stage_remain_time > 180)
-            {
-                sendGoal(patrol_points[1].x,patrol_points[1].y,0);
             } 
 
             actionlib::SimpleClientGoalState state = ac->getState();
@@ -126,7 +141,6 @@ class Dense : public BT::SyncActionNode {
                 dense_tx_.dodge_ctrl = 1;
                 ROS_INFO("dense_tx_.dodge_ctrl1 =%d",dense_tx_.dodge_ctrl);
                 dense_pub_.publish(dense_tx_);
-                // publish();
                 return BT::NodeStatus::SUCCESS;
             }
             else 
@@ -136,6 +150,8 @@ class Dense : public BT::SyncActionNode {
             }
             // dense_pub_.publish(dense_tx_);
             // reset();
+            dense_tx_.dodge_ctrl = 0;
+            dense_pub_.publish(dense_tx_);
             return BT::NodeStatus::SUCCESS;
         }
 
@@ -145,7 +161,7 @@ class Dense : public BT::SyncActionNode {
         bool dodge_ctrl;
         
         uint8_t addblood_need_ = 0;
-
+        uint8_t bullet_need_ = 0;
         rm_msgs::dense_rx dense_rx_;
         rm_msgs::dense_tx dense_tx_;
         ros::Subscriber dense_sub_;
@@ -174,7 +190,7 @@ class Dense : public BT::SyncActionNode {
         {
             ROS_INFO("Goal reached");
             dense_tx_.dodge_ctrl = 1;
-
+            dense_pub_.publish(dense_tx_);
         }
         else
         {
@@ -208,6 +224,12 @@ class Dense : public BT::SyncActionNode {
         {
             ROS_INFO("Distance to goal is less than or equal to 0.5 meters. Sending dodge_ctrl = 1.");
             dense_tx_.dodge_ctrl = 1;
+            dense_pub_.publish(dense_tx_);
+        }
+        else 
+        {
+            dense_tx_.dodge_ctrl = 0;
+            dense_pub_.publish(dense_tx_);
         }
         // 在此处可以添加接收到反馈时的逻辑处理
     }

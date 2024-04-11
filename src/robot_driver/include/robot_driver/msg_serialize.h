@@ -101,6 +101,7 @@ typedef struct
 	uint8_t armor_id : 4;             //受击打装甲板ID
   uint8_t HP_deduction_reason : 4;  //血量变化类型 0.装甲板受击打/1.裁判系统模块离线/2.超射速/3.热量超限/4.底盘功率超限/5.装甲板受撞击
   uint8_t center_activate;
+  uint16_t projectile_allowance_17mm; //可发弹量
 } __attribute__((packed)) robot_judge1_data_t;
 
 /**

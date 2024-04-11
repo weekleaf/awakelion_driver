@@ -25,6 +25,7 @@ public:
     static BT::PortsList providedPorts() {
         BT::PortsList ports_list;
         ports_list.insert(BT::InputPort<uint8_t>("blood_output"));
+        ports_list.insert(BT::InputPort<uint8_t>("bullet_output"));
         return ports_list;
     } 
     void sendGoal(double goal_x, double goal_y, double goal_yaw ){
@@ -79,11 +80,18 @@ public:
     {
         acessbuff_tx_.dodge_ctrl = 0;
         auto addblood_need = getInput<uint8_t>("blood_output");
+        auto bullet_need = getInput<uint8_t>("bullet_output");
+        
         if(addblood_need == 1)
                 addblood_need_ = 1;
         else addblood_need_ = 0;
 
-        if(addblood_need_ || acessbuff_rx_.stage_remain_time > 244 )
+        if(bullet_need == 1)
+                bullet_need_ = 1;
+        else bullet_need_ = 0;
+
+
+        if(addblood_need_ || acessbuff_rx_.stage_remain_time > 244 || bullet_need_)
         {
             return BT::NodeStatus::SUCCESS;
         }
@@ -93,11 +101,13 @@ public:
                 GoBuff();
                 if(acessbuff_rx_.center_activate != 1)
                 {
+                    acessbuff_tx_.dodge_ctrl = 1;
                     acessbuff_tx_pub_.publish(acessbuff_tx_);
                     return BT::NodeStatus::FAILURE;
                 }
                 buff_time++;
                 next_buff_time = acessbuff_rx_.stage_remain_time - 90;
+                acessbuff_tx_.dodge_ctrl = 0;
                 acessbuff_tx_pub_.publish(acessbuff_tx_);
                 reset();
                 return BT::NodeStatus::SUCCESS;
@@ -109,9 +119,11 @@ public:
                 GoBuff();
                 if(acessbuff_rx_.center_activate != 1)
                 {
+                    acessbuff_tx_.dodge_ctrl = 1;
                     acessbuff_tx_pub_.publish(acessbuff_tx_);
                     return BT::NodeStatus::FAILURE;
                 }
+                acessbuff_tx_.dodge_ctrl = 0;
                 acessbuff_tx_pub_.publish(acessbuff_tx_);
                 reset();
                 return BT::NodeStatus::SUCCESS;
@@ -121,6 +133,8 @@ public:
         {
             std::cout << "buff未开启" << std::endl;
             reset();
+            acessbuff_tx_.dodge_ctrl = 0;
+            acessbuff_tx_pub_.publish(acessbuff_tx_);
             return BT::NodeStatus::SUCCESS;
         }
     }
@@ -146,6 +160,7 @@ public:
 
     bool addblood_rx_received_;
     uint8_t addblood_need_ = 0;
+    uint8_t bullet_need_ = 0;
     
     rm_msgs::acessbuff_rx acessbuff_rx_;
     rm_msgs::acessbuff_tx acessbuff_tx_;
@@ -199,7 +214,13 @@ private:
         {
             ROS_INFO("Distance to goal is less than or equal to 0.5 meters. Sending dodge_ctrl = 1.");
             acessbuff_tx_.dodge_ctrl = 1;
+            acessbuff_tx_pub_.publish(acessbuff_tx_);
         }
+        else
+        {
+            acessbuff_tx_.dodge_ctrl = 0;
+            acessbuff_tx_pub_.publish(acessbuff_tx_);
+        } 
         // 在此处可以添加接收到反馈时的逻辑处理
     }
 

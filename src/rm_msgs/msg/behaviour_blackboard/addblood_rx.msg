@@ -8,3 +8,4 @@ uint8 enemy_HP_Infansty1
 uint8 enemy_HP_Infansty2
 uint8 enemy_HP_Sentry
 uint8 enemy_HP_Base
+uint16 projectile_allowance_17mm

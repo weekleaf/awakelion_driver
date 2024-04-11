@@ -27,6 +27,7 @@ public:
         BT::PortsList ports_list;
         ports_list.insert(BT::OutputPort<uint8_t>("output"));
         ports_list.insert(BT::OutputPort<uint8_t>("status"));
+        // ports_list.insert(BT::OutputPort<uint8_t>("bullet_status"));
         return ports_list;
     } 
         void reset()
@@ -50,7 +51,6 @@ public:
 
             try
             {
-                move_base_msgs::MoveBaseGoal goal;
                 goal.target_pose.header.frame_id = "map";
                 goal.target_pose.header.stamp = ros::Time::now();
                 goal.target_pose.pose.position = map_point.point;
@@ -84,10 +84,33 @@ public:
         //1.正常模式下，如果小于200血就去补给站补血
         //2.比赛离结束还有10s时，如果小于400就去补血
         //3.比赛离结束还有10s时，一旦我方哨兵血量小于敌方的就去补血
+        // if(addblood_rx_.projectile_allowance_17mm == 0 )
+        // {
+        //     if(addblood_rx_.current_HP <= (addblood_rx_.maximum_HP - 200) 
+        //     || (addblood_rx_.current_HP <= (addblood_rx_.maximum_HP - 100)
+        //     && addblood_rx_.stage_remain_time <= 10)
+        //     || (addblood_rx_.current_HP <= addblood_rx_.enemy_HP_Sentry && addblood_rx_.stage_remain_time <= 10)
+        //     )
+        //     {
+        //         addblood_need = 1;
+        //         sendGoal(patrol_points[0].x,patrol_points[0].y,0);
+        //         std::cout << "Need to add blood!" << std::endl;
+        //         setOutput("status",addblood_need);
+        //     }
+        //     else
+        //     {
+        //         bullet_need = 1;
+        //         sendGoal(patrol_points[1].x,patrol_points[1].y,0);
+        //         std::cout << "Protected home!" << std::endl;
+        //         setOutput("bullet_status",bullet_need); 
+        //         return BT::NodeStatus::FAILURE;             
+        //     }
+
+        // }
         if(addblood_need == 0)
         {
-            if(addblood_rx_.current_HP <= (addblood_rx_.maximum_HP - 400) 
-            || (addblood_rx_.current_HP <= (addblood_rx_.maximum_HP - 300)
+            if(addblood_rx_.current_HP <= (addblood_rx_.maximum_HP - 200) 
+            || (addblood_rx_.current_HP <= (addblood_rx_.maximum_HP - 100)
             && addblood_rx_.stage_remain_time <= 10)
             || (addblood_rx_.current_HP <= addblood_rx_.enemy_HP_Sentry && addblood_rx_.stage_remain_time <= 10)
             )
@@ -114,6 +137,8 @@ public:
                 addblood_need = 0;
                 std::cout << "Add success!" << std::endl;
                 setOutput("status",addblood_need);
+                addblood_tx_.dodge_ctrl = 0;
+                addblood_pub_.publish(addblood_tx_);
                 return BT::NodeStatus::SUCCESS;
             }
             //假如未到达识别点
@@ -135,6 +160,7 @@ public:
 }
     //各个节点的任务确认标志位
     uint8_t addblood_need = 0;
+    bool bullet_need;
     bool addblood_rx_received_;
     bool rmul_supply_station;
 
@@ -145,7 +171,8 @@ public:
     };
 
     std::vector<patrol_point> patrol_points{
-      {0.67,7.185}
+      {0.67,7.185},
+      {2.47,2.567},
     };
     
     uint8_t enemy_HP_Hero;
@@ -162,6 +189,7 @@ public:
 
 private:
     std::unique_ptr<actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>> ac;
+    move_base_msgs::MoveBaseGoal goal;
 
     void AddBloodCallback(const boost::shared_ptr<const rm_msgs::addblood_rx>& msg)
     {
@@ -199,6 +227,20 @@ private:
 
     void feedbackCb(const move_base_msgs::MoveBaseFeedbackConstPtr& feedback)
     {
+     double current_distance = sqrt(pow(goal.target_pose.pose.position.x-feedback->base_position.pose.position.x, 2) + 
+                                        pow(goal.target_pose.pose.position.y-feedback->base_position.pose.position.y, 2));
+   
+        if (current_distance <= 0.5)
+        {
+            ROS_INFO("Attack sentry distance to goal is less than or equal to 0.5 meters. Sending dodge_ctrl = 1.");
+            addblood_tx_.dodge_ctrl = 1;
+            addblood_pub_.publish(addblood_tx_);
+        }
+        else
+        {
+            addblood_tx_.dodge_ctrl = 0;
+            addblood_pub_.publish(addblood_tx_);
+        } 
         // 在此处可以添加接收到反馈时的逻辑处理
     }
 };
